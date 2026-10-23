@@ -1,230 +1,240 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
-  <div v-if="viewmode === 'cards'">
-    <template v-for="(chunk, index) in data" :key="index">
-      <v-row
-        static
-        :class="[title_classes, 'text-caption', 'align-center']"
-        no-gutters
-      >
-        <v-col class="v-col-1 ml-4">
-          <v-icon v-if="chunk.Direction === 0" color="red"
-            >mdi-arrow-right-thin-circle-outline</v-icon
-          >
-          <v-icon v-else color="green"
-            >mdi-arrow-left-thin-circle-outline</v-icon
-          >
-          <span>
-            {{ chunk.Direction === 0 ? "Client" : "Server" }}
-          </span>
-        </v-col>
-        <v-col v-if="chunk.Time !== undefined" class="v-col-1">
-          <v-tooltip location="bottom">
-            <template #activator="{ props: tprops }">
-              <v-chip v-bind="tprops" size="small" variant="text"
-                >+{{
-                  formatDateDifference(chunk.Time, data[index - 1]?.Time)
-                }}</v-chip
-              >
-            </template>
-            <span>{{ formatDate(chunk.Time) }}</span>
-          </v-tooltip>
-        </v-col>
-        <v-col class="v-col-1">
-          {{ formatChunkSize(chunk) }}
-        </v-col>
-        <v-col>
-          <v-btn-toggle
-            v-model="chunk.Presentation"
-            mandatory
-            density="compact"
-            variant="text"
-            color="primary"
-            class="smol-group"
-            @click.stop
-          >
-            <v-tooltip location="bottom">
-              <template #activator="{ props: pprops }">
-                <v-btn value="ascii" v-bind="pprops" size="x-small">
-                  <v-icon>mdi-text-long</v-icon>
-                </v-btn>
-              </template>
-              <span>ASCII</span>
-            </v-tooltip>
-            <v-tooltip location="bottom">
-              <template #activator="{ props: pprops }">
-                <v-btn value="utf-8" v-bind="pprops" size="x-small">
-                  <v-icon>mdi-format-font</v-icon>
-                </v-btn>
-              </template>
-              <span>UTF-8</span>
-            </v-tooltip>
-            <v-tooltip location="bottom">
-              <template #activator="{ props: pprops }">
-                <v-btn value="hexdump" v-bind="pprops" size="x-small">
-                  <v-icon>mdi-format-columns</v-icon>
-                </v-btn>
-              </template>
-              <span>HEXDUMP</span>
-            </v-tooltip>
-            <v-tooltip location="bottom">
-              <template #activator="{ props: pprops }">
-                <v-btn value="raw" v-bind="pprops" size="x-small">
-                  <v-icon>mdi-hexadecimal</v-icon>
-                </v-btn>
-              </template>
-              <span>RAW</span>
-            </v-tooltip>
-            <v-tooltip
-              v-if="supportsIframeVisualization(chunk)"
-              location="bottom"
+  <div>
+    <div v-if="viewmode === 'cards'">
+      <template v-for="(chunk, index) in visibleData" :key="index">
+        <v-row
+          static
+          :class="[title_classes, 'text-caption', 'align-center']"
+          no-gutters
+        >
+          <v-col class="v-col-1 ml-4">
+            <v-icon v-if="chunk.Direction === 0" color="red"
+              >mdi-arrow-right-thin-circle-outline</v-icon
             >
+            <v-icon v-else color="green"
+              >mdi-arrow-left-thin-circle-outline</v-icon
+            >
+            <span>
+              {{ chunk.Direction === 0 ? "Client" : "Server" }}
+            </span>
+          </v-col>
+          <v-col v-if="chunk.Time !== undefined" class="v-col-1">
+            <v-tooltip location="bottom">
+              <template #activator="{ props: tprops }">
+                <v-chip v-bind="tprops" size="small" variant="text"
+                  >+{{
+                    formatDateDifference(chunk.Time, data[index - 1]?.Time)
+                  }}</v-chip
+                >
+              </template>
+              <span>{{ formatDate(chunk.Time) }}</span>
+            </v-tooltip>
+          </v-col>
+          <v-col class="v-col-1">
+            {{ formatChunkSize(chunk) }}
+          </v-col>
+          <v-col>
+            <v-btn-toggle
+              v-model="chunk.Presentation"
+              mandatory
+              density="compact"
+              variant="text"
+              color="primary"
+              class="smol-group"
+              @click.stop
+            >
+              <v-tooltip location="bottom">
+                <template #activator="{ props: pprops }">
+                  <v-btn value="ascii" v-bind="pprops" size="x-small">
+                    <v-icon>mdi-text-long</v-icon>
+                  </v-btn>
+                </template>
+                <span>ASCII</span>
+              </v-tooltip>
+              <v-tooltip location="bottom">
+                <template #activator="{ props: pprops }">
+                  <v-btn value="utf-8" v-bind="pprops" size="x-small">
+                    <v-icon>mdi-format-font</v-icon>
+                  </v-btn>
+                </template>
+                <span>UTF-8</span>
+              </v-tooltip>
+              <v-tooltip location="bottom">
+                <template #activator="{ props: pprops }">
+                  <v-btn value="hexdump" v-bind="pprops" size="x-small">
+                    <v-icon>mdi-format-columns</v-icon>
+                  </v-btn>
+                </template>
+                <span>HEXDUMP</span>
+              </v-tooltip>
+              <v-tooltip location="bottom">
+                <template #activator="{ props: pprops }">
+                  <v-btn value="raw" v-bind="pprops" size="x-small">
+                    <v-icon>mdi-hexadecimal</v-icon>
+                  </v-btn>
+                </template>
+                <span>RAW</span>
+              </v-tooltip>
+              <v-tooltip
+                v-if="supportsIframeVisualization(chunk)"
+                location="bottom"
+              >
+                <template #activator="{ props: pprops }">
+                  <v-btn value="web" v-bind="pprops" size="x-small">
+                    <v-icon>mdi-web</v-icon>
+                  </v-btn>
+                </template>
+                <span>WEB</span>
+              </v-tooltip>
+            </v-btn-toggle>
+          </v-col>
+          <v-col class="v-col-2">
+            <v-tooltip location="bottom">
               <template #activator="{ props: pprops }">
-                <v-btn value="web" v-bind="pprops" size="x-small">
-                  <v-icon>mdi-web</v-icon>
+                <v-btn
+                  v-bind="pprops"
+                  size="x-small"
+                  variant="text"
+                  icon="mdi-chef-hat"
+                  @click="openInCyberChef(chunk)"
+                  @click.stop
+                >
                 </v-btn>
               </template>
-              <span>WEB</span>
+              <span>Open in CyberChef</span>
             </v-tooltip>
-          </v-btn-toggle>
-        </v-col>
-        <v-col class="v-col-2">
-          <v-tooltip location="bottom">
-            <template #activator="{ props: pprops }">
-              <v-btn
-                v-bind="pprops"
-                size="x-small"
-                variant="text"
-                icon="mdi-chef-hat"
-                @click="openInCyberChef(chunk)"
-                @click.stop
-              >
-              </v-btn>
-            </template>
-            <span>Open in CyberChef</span>
-          </v-tooltip>
-          <v-tooltip location="bottom">
-            <template #activator="{ props: pprops }">
-              <v-btn
-                v-bind="pprops"
-                size="x-small"
-                variant="text"
-                @click="downloadChunk(index, chunk)"
-                @click.stop
-              >
-                <v-icon>mdi-download</v-icon>
-              </v-btn>
-            </template>
-            <span>Download</span>
-          </v-tooltip>
-          <v-tooltip location="bottom">
-            <template #activator="{ props: pprops }">
-              <v-btn
-                v-bind="pprops"
-                size="x-small"
-                variant="text"
-                icon="mdi-content-copy"
-                @click="copyToClipboard(chunk)"
-                @click.stop
-              >
-              </v-btn>
-            </template>
-            <span>Copy Content</span>
-          </v-tooltip>
-        </v-col>
-      </v-row>
-      <v-row no-gutters class="break-all ma-4 mt-2">
-        <v-col cols="12">
-          <span
-            v-if="chunk.Presentation === 'ascii'"
-            class="chunk"
-            :data-chunk-idx="index"
-            :class="[classes(chunk)]"
-            v-html="inlineAscii(chunk)"
-          >
-          </span>
-          <span
-            v-else-if="chunk.Presentation === 'utf-8'"
-            class="chunk"
-            :data-chunk-idx="index"
-            :class="[classes(chunk)]"
-            v-html="inlineUnicode(chunk)"
-          >
-          </span>
-          <pre
-            v-else-if="chunk.Presentation === 'hexdump'"
-            :class="[classes(chunk), 'hexdump']"
-            >{{ hexdump(chunk.Content) }}</pre>
+            <v-tooltip location="bottom">
+              <template #activator="{ props: pprops }">
+                <v-btn
+                  v-bind="pprops"
+                  size="x-small"
+                  variant="text"
+                  @click="downloadChunk(index, chunk)"
+                  @click.stop
+                >
+                  <v-icon>mdi-download</v-icon>
+                </v-btn>
+              </template>
+              <span>Download</span>
+            </v-tooltip>
+            <v-tooltip location="bottom">
+              <template #activator="{ props: pprops }">
+                <v-btn
+                  v-bind="pprops"
+                  size="x-small"
+                  variant="text"
+                  icon="mdi-content-copy"
+                  @click="copyToClipboard(chunk)"
+                  @click.stop
+                >
+                </v-btn>
+              </template>
+              <span>Copy Content</span>
+            </v-tooltip>
+          </v-col>
+        </v-row>
+        <v-row no-gutters class="break-all ma-4 mt-2">
+          <v-col cols="12">
+            <span
+              v-if="chunk.Presentation === 'ascii'"
+              class="chunk"
+              :data-chunk-idx="index"
+              :class="[classes(chunk)]"
+              v-html="inlineAscii(chunk)"
+            >
+            </span>
+            <span
+              v-else-if="chunk.Presentation === 'utf-8'"
+              class="chunk"
+              :data-chunk-idx="index"
+              :class="[classes(chunk)]"
+              v-html="inlineUnicode(chunk)"
+            >
+            </span>
+            <pre
+              v-else-if="chunk.Presentation === 'hexdump'"
+              :class="[classes(chunk), 'hexdump']"
+              >{{ hexdump(chunk.Content) }}</pre>
 
-          <span
-            v-else-if="chunk.Presentation === 'raw'"
-            :class="[classes(chunk)]"
-            >{{ inlineHex(chunk.Content) }}<br
-          /></span>
-          <template v-else-if="chunk.Presentation === 'web'">
-            <div
-              v-if="supportsIframeVisualization(chunk)"
-              class="iframe-content"
+            <span
+              v-else-if="chunk.Presentation === 'raw'"
+              :class="[classes(chunk)]"
+              >{{ inlineHex(chunk.Content) }}<br
+            /></span>
+            <template v-else-if="chunk.Presentation === 'web'">
+              <div
+                v-if="supportsIframeVisualization(chunk)"
+                class="iframe-content"
+              >
+                <iframe
+                  :src="`data:${chunk.ContentType};base64,${chunk.Content}`"
+                  width="100%"
+                  height="100%"
+                  sandbox=""
+                  csp="default-src 'none'"
+                ></iframe>
+              </div>
+              <span v-else>
+                <span class="text-caption">Unsupported content type: </span>
+                <span class="text-body-2">{{ chunk.ContentType }}</span>
+              </span>
+            </template>
+          </v-col>
+        </v-row>
+      </template>
+    </div>
+    <div v-else>
+      <v-card>
+        <v-card-text>
+          <template v-if="presentation === 'ascii'">
+            <span
+              v-for="(chunk, index) in visibleData"
+              :key="index"
+              class="chunk"
+              :data-chunk-idx="index"
+              :class="[classes(chunk)]"
+              v-html="inlineAscii(chunk)"
             >
-              <iframe
-                :src="`data:${chunk.ContentType};base64,${chunk.Content}`"
-                width="100%"
-                height="100%"
-                sandbox=""
-                csp="default-src 'none'"
-              ></iframe>
-            </div>
-            <span v-else>
-              <span class="text-caption">Unsupported content type: </span>
-              <span class="text-body-2">{{ chunk.ContentType }}</span>
             </span>
           </template>
-        </v-col>
-      </v-row>
-    </template>
-  </div>
-  <div v-else>
-    <v-card>
-      <v-card-text>
-        <template v-if="presentation === 'ascii'">
-          <span
-            v-for="(chunk, index) in data"
-            :key="index"
-            class="chunk"
-            :data-chunk-idx="index"
-            :class="[classes(chunk)]"
-            v-html="inlineAscii(chunk)"
-          >
-          </span>
-        </template>
-        <template v-else-if="presentation === 'utf-8'">
-          <span
-            v-for="(chunk, index) in data"
-            :key="index"
-            class="chunk"
-            :data-chunk-idx="index"
-            :class="[classes(chunk)]"
-            v-html="inlineUnicode(chunk)"
-          >
-          </span>
-        </template>
-        <template v-else-if="presentation === 'hexdump'">
-          <pre
-            v-for="(chunk, index) in data"
-            :key="index"
-            :class="[classes(chunk), 'hexdump']"
-            >{{ hexdump(chunk.Content) }}</pre>
-        </template>
-        <template v-else>
-          <span
-            v-for="(chunk, index) in data"
-            :key="index"
-            :class="[classes(chunk)]"
-            >{{ inlineHex(chunk.Content) }}<br
-          /></span>
-        </template>
-      </v-card-text>
-    </v-card>
+          <template v-else-if="presentation === 'utf-8'">
+            <span
+              v-for="(chunk, index) in visibleData"
+              :key="index"
+              class="chunk"
+              :data-chunk-idx="index"
+              :class="[classes(chunk)]"
+              v-html="inlineUnicode(chunk)"
+            >
+            </span>
+          </template>
+          <template v-else-if="presentation === 'hexdump'">
+            <pre
+              v-for="(chunk, index) in visibleData"
+              :key="index"
+              :class="[classes(chunk), 'hexdump']"
+              >{{ hexdump(chunk.Content) }}</pre>
+          </template>
+          <template v-else>
+            <span
+              v-for="(chunk, index) in visibleData"
+              :key="index"
+              :class="[classes(chunk)]"
+              >{{ inlineHex(chunk.Content) }}<br
+            /></span>
+          </template>
+        </v-card-text>
+      </v-card>
+    </div>
+    <div v-if="hiddenChunkCount > 0" class="d-flex justify-center ga-2 ma-4">
+      <v-btn variant="tonal" @click="showMoreChunks">
+        Show {{ Math.min(CHUNK_PAGE_SIZE, hiddenChunkCount) }} more chunks
+      </v-btn>
+      <v-btn variant="text" @click="showAllChunks">
+        Show all {{ hiddenChunkCount }} remaining (slow)
+      </v-btn>
+    </div>
   </div>
 </template>
 
@@ -304,6 +314,23 @@ const data = ref(
     return visualChunk;
   }),
 );
+
+// Rendering every chunk of a stream with many small chunks freezes the UI,
+// so only render a page of chunks at a time.
+const CHUNK_PAGE_SIZE = 100;
+const visibleChunkCount = ref(CHUNK_PAGE_SIZE);
+const visibleData = computed(() =>
+  data.value.slice(0, visibleChunkCount.value),
+);
+const hiddenChunkCount = computed(() =>
+  Math.max(0, data.value.length - visibleChunkCount.value),
+);
+const showMoreChunks = () => {
+  visibleChunkCount.value += CHUNK_PAGE_SIZE;
+};
+const showAllChunks = () => {
+  visibleChunkCount.value = data.value.length;
+};
 
 const getBgThemeColor = () => {
   const colorScheme = getColorScheme();
