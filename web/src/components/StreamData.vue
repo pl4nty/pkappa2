@@ -1,8 +1,18 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
   <div>
-    <div v-if="viewmode === 'cards'">
-      <template v-for="(chunk, index) in visibleData" :key="index">
+    <v-alert
+      v-if="viewmode === 'cards' && !useCards"
+      type="info"
+      density="compact"
+      variant="tonal"
+      class="ma-2"
+    >
+      This stream has {{ data.length }} chunks, which is too many to show as
+      cards. Showing a plain view instead.
+    </v-alert>
+    <div v-if="useCards">
+      <template v-for="(chunk, index) in data" :key="index">
         <v-row
           static
           :class="[title_classes, 'text-caption', 'align-center']"
@@ -189,7 +199,7 @@
         <v-card-text>
           <template v-if="presentation === 'ascii'">
             <span
-              v-for="(chunk, index) in visibleData"
+              v-for="(chunk, index) in data"
               :key="index"
               class="chunk"
               :data-chunk-idx="index"
@@ -200,7 +210,7 @@
           </template>
           <template v-else-if="presentation === 'utf-8'">
             <span
-              v-for="(chunk, index) in visibleData"
+              v-for="(chunk, index) in data"
               :key="index"
               class="chunk"
               :data-chunk-idx="index"
@@ -211,14 +221,14 @@
           </template>
           <template v-else-if="presentation === 'hexdump'">
             <pre
-              v-for="(chunk, index) in visibleData"
+              v-for="(chunk, index) in data"
               :key="index"
               :class="[classes(chunk), 'hexdump']"
               >{{ hexdump(chunk.Content) }}</pre>
           </template>
           <template v-else>
             <span
-              v-for="(chunk, index) in visibleData"
+              v-for="(chunk, index) in data"
               :key="index"
               :class="[classes(chunk)]"
               >{{ inlineHex(chunk.Content) }}<br
@@ -226,14 +236,6 @@
           </template>
         </v-card-text>
       </v-card>
-    </div>
-    <div v-if="hiddenChunkCount > 0" class="d-flex justify-center ga-2 ma-4">
-      <v-btn variant="tonal" @click="showMoreChunks">
-        Show {{ Math.min(CHUNK_PAGE_SIZE, hiddenChunkCount) }} more chunks
-      </v-btn>
-      <v-btn variant="text" @click="showAllChunks">
-        Show all {{ hiddenChunkCount }} remaining (slow)
-      </v-btn>
     </div>
   </div>
 </template>
@@ -315,22 +317,13 @@ const data = ref(
   }),
 );
 
-// Rendering every chunk of a stream with many small chunks freezes the UI,
-// so only render a page of chunks at a time.
-const CHUNK_PAGE_SIZE = 100;
-const visibleChunkCount = ref(CHUNK_PAGE_SIZE);
-const visibleData = computed(() =>
-  data.value.slice(0, visibleChunkCount.value),
+// Each card creates many Vuetify components, so streams with many chunks
+// would take minutes to render. Fall back to the plain view for those,
+// which still renders all chunks so the browser search finds everything.
+const MAX_CARD_CHUNKS = 200;
+const useCards = computed(
+  () => props.viewmode === "cards" && data.value.length <= MAX_CARD_CHUNKS,
 );
-const hiddenChunkCount = computed(() =>
-  Math.max(0, data.value.length - visibleChunkCount.value),
-);
-const showMoreChunks = () => {
-  visibleChunkCount.value += CHUNK_PAGE_SIZE;
-};
-const showAllChunks = () => {
-  visibleChunkCount.value = data.value.length;
-};
 
 const getBgThemeColor = () => {
   const colorScheme = getColorScheme();
